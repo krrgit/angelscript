@@ -1450,6 +1450,13 @@ void asCCompiler::CompileStatementBlock(asCScriptNode *block, bool ownVariableSc
 			asCScriptNode* n = node->firstChild;
 			asCString name(&script->code[n->tokenPos], n->tokenLength);
 
+			while( n->next && n->next->nodeType == snIdentifier )
+			{
+				n = n->next;
+				name += "::";
+				name += asCString(&script->code[n->tokenPos], n->tokenLength);
+			}
+
 			auto visibleNamespace = engine->FindNameSpace(name.AddressOf());
 
 			if (visibleNamespace == 0)
