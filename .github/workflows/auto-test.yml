@@ -1,0 +1,21 @@
+name: Automated test
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  Linux-x86-64:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout angelscript
+    - uses: actions/checkout@v4
+    
+    - name: build angelscript
+      run: |
+        cd $GITHUB_WORKSPACE/sdk/angelscript/projects/gnuc
+        make
+        
+    
