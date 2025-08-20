@@ -25,7 +25,9 @@ jobs:
     - name: run test_feature
       run: |
         cd $GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        ./testgnuc
+        ./testgnuc > result.txt
+        cat result.txt
+        grep "All of the tests passed with success." result.txt
         
         
     
