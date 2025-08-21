@@ -889,6 +889,57 @@ int asCScriptFunction::FindNextLineWithCode(int line) const
 }
 
 // interface
+int asCScriptFunction::GetLineEntryCount() const
+{
+	if (scriptData == 0) return asNOT_SUPPORTED;
+
+	return scriptData->lineNumbers.GetLength() / 2;
+}
+
+// interface
+int asCScriptFunction::GetLineEntry(asUINT index, int* row, int *col, const char** sectionName, const asDWORD** byteCode) const
+{
+	if (scriptData == 0) return asNOT_SUPPORTED;
+	if (index >= scriptData->lineNumbers.GetLength() / 2)
+		return asINVALID_ARG;
+
+	int position = scriptData->lineNumbers[index * 2];
+	int rowcol = scriptData->lineNumbers[(index * 2) + 1];
+
+	if (row) *row = rowcol & 0xFFFFF;
+	if (col) *col = rowcol >> 20;
+
+	if (sectionName)
+	{
+		if (scriptData->sectionIdxs.GetLength() > 0)
+		{
+			int sectionIdx = 0;
+
+			// Find the correct section index if the function is compiled from multiple sections
+			// This array will be empty most of the time so we don't need a sofisticated algorithm to search it
+			for (asUINT n = 0; n < scriptData->sectionIdxs.GetLength(); n += 2)
+			{
+				if (scriptData->sectionIdxs[n] <= position)
+					sectionIdx = scriptData->sectionIdxs[n + 1];
+			}
+
+			*sectionName = engine->scriptSectionNames[sectionIdx]->AddressOf();
+		}
+		else
+			*sectionName = engine->scriptSectionNames[scriptData->scriptSectionIdx]->AddressOf();
+	}
+
+	if( byteCode )
+	{
+		if (scriptData->byteCode.GetLength() == 0)
+			return asERROR;
+		*byteCode = scriptData->byteCode.AddressOf() + position;
+	}
+
+	return 0;
+}
+
+// interface
 int asCScriptFunction::GetDeclaredAt(const char** scriptSection, int* row, int* col) const
 {
 	if (!scriptData)

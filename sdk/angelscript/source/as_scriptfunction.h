@@ -209,6 +209,8 @@ public:
 	const char *         GetVarDecl(asUINT index, bool includeNamespace = false) const;
 	int                  FindNextLineWithCode(int line) const;
 	int                  GetDeclaredAt(const char** scriptSection, int* row, int* col) const;
+	int                  GetLineEntryCount() const;
+	int                  GetLineEntry(asUINT index, int* row, int* col, const char** sectionName, const asDWORD** byteCode) const;
 
 	// For JIT compilation
 	asDWORD *            GetByteCode(asUINT *length = 0);

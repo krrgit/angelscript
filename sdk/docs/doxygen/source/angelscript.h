@@ -4296,6 +4296,25 @@ public:
 	//! e.g. a registered function or an auto-generated script function. It can also be null if the information
 	//! has been removed, e.g. when saving bytecode without debug info.
 	virtual int              GetDeclaredAt(const char** scriptSection, int* row, int* col) const = 0;
+	//! \brief Returns the number of line information entries
+	//! \return A negative value on error
+	//! \retval asNOT_SUPPORTED The function is not a script function
+	virtual int              GetLineEntryCount() const = 0;
+	//! \brief Returns the line information entry
+	//! \param[in]  index The index of the line entry to retrieve
+	//! \param[out] row The row of the line entry
+	//! \param[out] col The column of the line entry
+	//! \param[out] sectionName The script section that the line is referring to
+	//! \param[out] byteCode The compiled bytecode that the line starts at
+	//! \return A negative value on error
+	//! \retval asNOT_SUPPORTED The function is not a script function
+	//! \retval asINVALID_ARG The index is out of range
+	//! \retval asERROR There is no bytecode
+	//! 
+	//! This function can be used to find all the lines with code in a function.
+	//! 
+	//! The bytecode pointer can be used to inspect the compiled bytecode at the line.
+	virtual int              GetLineEntry(asUINT index, int* row, int* col, const char** sectionName, const asDWORD** byteCode) const = 0;
 	//! \}
 
 	//! \name JIT compilation

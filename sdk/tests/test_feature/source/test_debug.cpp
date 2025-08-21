@@ -335,6 +335,67 @@ bool Test()
 	int r;
 	bool fail = Test2();
 
+	// Test GetLineEntryCount and GetLineEntry
+	{
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		CBufferedOutStream bout;
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"void func(int x) { \n"
+			"  int y = x * 2 + 3; \n"
+			"  int z = y + 1; \n"
+			"} \n"
+			"class B : A { \n"
+			"  B() { b = 10; } \n"
+			"  int b; \n"
+			"} \n");
+		mod->AddScriptSection("mixin",
+			"mixin class A { \n"
+			"  int a = 5; \n"
+			"} \n");
+		r = mod->Build();
+		if (r < 0)
+			TEST_FAILED;
+
+		asIScriptFunction* func = mod->GetFunctionByName("func");
+		if (!func)
+			TEST_FAILED;
+		const int count = func->GetLineEntryCount();
+		if (count != 3)
+			TEST_FAILED;
+
+		int row, col;
+		const char* sectionName;
+		const asDWORD* bytecode;
+		r = func->GetLineEntry(0, &row, &col, &sectionName, &bytecode); if (r < 0) TEST_FAILED;
+		if( row != 2 || col != 3 || strcmp(sectionName, "test") != 0 || bytecode - func->GetByteCode() != 0) TEST_FAILED;
+		r = func->GetLineEntry(1, &row, &col, &sectionName, &bytecode); if (r < 0) TEST_FAILED;
+		if (row != 3 || col != 3 || strcmp(sectionName, "test") != 0 || bytecode - func->GetByteCode() != 7) TEST_FAILED;
+		r = func->GetLineEntry(2, &row, &col, &sectionName, &bytecode); if (r < 0) TEST_FAILED;
+		if (row != 4 || col != 2 || strcmp(sectionName, "test") != 0 || bytecode - func->GetByteCode() != 11) TEST_FAILED;
+
+		asITypeInfo *b = mod->GetTypeInfoByDecl("B");
+		asEBehaviours beh;
+		func = b->GetBehaviourByIndex(8, &beh);
+		if (beh != asBEHAVE_CONSTRUCT) TEST_FAILED;
+
+		r = func->GetLineEntry(0, &row, &col, &sectionName, &bytecode); if (r < 0) TEST_FAILED;
+		if (row != 2 || col != 7 || strcmp(sectionName, "mixin") != 0 || bytecode - func->GetByteCode() != 0) TEST_FAILED;
+		r = func->GetLineEntry(1, &row, &col, &sectionName, &bytecode); if (r < 0) TEST_FAILED;
+		if (row != 6 || col != 9 || strcmp(sectionName, "test") != 0 || bytecode - func->GetByteCode() != 6) TEST_FAILED;
+		r = func->GetLineEntry(2, &row, &col, &sectionName, &bytecode); if (r < 0) TEST_FAILED;
+		if (row != 6 || col != 18 || strcmp(sectionName, "test") != 0 || bytecode - func->GetByteCode() != 12) TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test GetAddressOfVar for object variables whose stack position is reused in multiple scopes
 	// Reported by Paril
 	SKIP_ON_MAX_PORT
