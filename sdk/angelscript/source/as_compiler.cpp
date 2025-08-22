@@ -5468,7 +5468,6 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 	CompileInitializationWithAssignment(
 		&initBC, iterDt, node->firstChild, iterOffset, NULL, asVGM_VARIABLE, rangeNode, &opForBeginExpr
 	);
-	ReleaseTemporaryVariable(opForBeginExpr.type, &initBC);
 	initBC.OptimizeLocally(tempVariableOffsets);
 
 	//-----------------------------------
@@ -5567,6 +5566,7 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 			ttAssignment,
 			node
 		);
+		ProcessDeferredParams(&next);
 		ReleaseTemporaryVariable(next.type, &next.bc);
 
 		// Pop the value from the stack
