@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: set up Clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+       version: latest
+       platform: x64
+       cc: 1
     - name: build angelscript
       run: |
         cd $GITHUB_WORKSPACE/sdk/angelscript/projects/gnuc
