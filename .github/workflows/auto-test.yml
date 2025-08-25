@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  Linux-x86-64:
+  Linux x86-64 GCC:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -26,8 +26,8 @@ jobs:
         cat result.txt
         grep "All of the tests passed with success." result.txt
         
-  Clang:      
-    runs-on: ubuntu-latest
+  Windows x86-64 Clang:      
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
     - name: set up Clang
