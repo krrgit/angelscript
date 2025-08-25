@@ -3280,7 +3280,9 @@ asIScriptFunction *asCScriptEngine::GetGlobalFunctionByDecl(const char *decl) co
 	if( r < 0 )
 		return 0;
 
-	asSNameSpace *ns = defaultNamespace;
+	// If the declaration gave an explicit namespace, use it
+	asSNameSpace *ns = func.nameSpace;
+
 	// Search script functions for matching interface
 	while( ns )
 	{

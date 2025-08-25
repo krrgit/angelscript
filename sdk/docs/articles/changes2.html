@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.39.0 WIP - 2025/08/22</h2>
+<h2>Version 2.39.0 WIP - 2025/08/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -23,6 +23,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed using namespaces with nested namespaces (Thanks sashi0034)
 <li>Fixed issue in compiling the switch cases for large numbers due to 32bit overflow (Thanks power_mcu)
 <li>Fixed assert failure in compiling foreach with iterator as non-pod value type (Thanks atoft)
+<li>GetGlobalFunctionByDecl wasn't using the explicit namespace in the declaration (Thanks Miss)
 </ul>
 <li>Library interface
 <ul>
