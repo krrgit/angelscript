@@ -25,28 +25,28 @@ jobs:
         ./testgnuc > result.txt
         cat result.txt
         grep "All of the tests passed with success." result.txt
-        
-  Windows_x86-64_Clang:      
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: set up Clang
-      uses: egor-tensin/setup-clang@v1
-      with:
-       version: latest
-       platform: x64
-       cc: 1
-    - name: build angelscript & test_feature
-      shell: powershell
-      run: |
-        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
-        cmake .
-        cmake --build .
-    - name: run test_feature
-      shell: powershell
-      run: |
-        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        debug/test_feature.exe
+
+# Disable auto-test on Windows for now. Need to change the test app to not wait for user input when running in unassisted mode
+#  Windows_x86-64_Clang:      
+#    runs-on: windows-latest
+#    steps:
+#    - uses: actions/checkout@v4
+#    - name: set up Clang
+#      uses: egor-tensin/setup-clang@v1
+#      with:
+#       version: latest
+#       platform: x64
+#       cc: 1
+#    - name: build angelscript & test_feature
+#      shell: powershell
+#      run: |
+#        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
+#        cmake .
+#        cmake --build .
+#    - name: run test_feature
+#      shell: powershell
+#      run: |
+#        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
 #        debug/test_feature.exe > result.txt
 #        cat result.txt
 #        grep "All of the tests passed with success." result.txt
