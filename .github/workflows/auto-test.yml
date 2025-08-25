@@ -33,7 +33,7 @@ jobs:
     - name: build angelscript & test_feature
       run: |
         cd $GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
-        cmake
+        cmake .
         cmake --build .
     - name: run test_feature
       run: |
