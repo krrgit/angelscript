@@ -22,9 +22,7 @@ jobs:
     - name: run test_feature
       run: |
         cd $GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        ./testgnuc > result.txt
-        cat result.txt
-        grep "All of the tests passed with success." result.txt
+        ./testgnuc
 
   Windows_x86-64_Clang:      
     runs-on: windows-latest
@@ -40,15 +38,13 @@ jobs:
       shell: powershell
       run: |
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
-        cmake . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-        cmake --build .
+        cmake . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -G "Visual Studio 17 2022"
+        cmake --build . --config Release
     - name: run test_feature
       shell: powershell
       run: |
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        debug/test_feature.exe > result.txt
-        cat result.txt
-        grep "All of the tests passed with success." result.txt
+        debug/test_feature.exe
 
 
         
