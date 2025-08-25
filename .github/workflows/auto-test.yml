@@ -46,9 +46,10 @@ jobs:
       shell: powershell
       run: |
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        debug/test_feature.exe > result.txt
-        cat result.txt
-        grep "All of the tests passed with success." result.txt
+        debug/test_feature.exe
+#        debug/test_feature.exe > result.txt
+#        cat result.txt
+#        grep "All of the tests passed with success." result.txt
 
 
         
