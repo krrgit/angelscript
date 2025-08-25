@@ -37,13 +37,15 @@ jobs:
        platform: x64
        cc: 1
     - name: build angelscript & test_feature
+      shell: powershell
       run: |
-        cd $GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
+        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
         cmake .
         cmake --build .
     - name: run test_feature
+      shell: powershell
       run: |
-        cd $GITHUB_WORKSPACE/sdk/tests/test_feature/bin
+        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
         ./test_feature > result.txt
         cat result.txt
         grep "All of the tests passed with success." result.txt
