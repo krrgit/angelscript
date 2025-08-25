@@ -425,7 +425,7 @@ int allTests()
 //succeed:
 	PRINTF("--------------------------------------------\n");
 	PRINTF("All of the tests passed with success.\n\n");
-#if !defined(DONT_WAIT) && !defined(_M_ARM) && (defined(WIN32) || defined(_WIN64))
+#if defined(WAIT_ON_END) && !defined(_M_ARM) && (defined(WIN32) || defined(_WIN64))
 	PRINTF("Press any key to quit.\n");
 	while(!_getch());
 #endif
@@ -434,7 +434,7 @@ int allTests()
 failed:
 	PRINTF("--------------------------------------------\n");
 	PRINTF("One of the tests failed, see details above.\n\n");
-#if !defined(DONT_WAIT) && !defined(_M_ARM) && (defined(WIN32) || defined(_WIN64))
+#if defined(WAIT_ON_END) && !defined(_M_ARM) && (defined(WIN32) || defined(_WIN64))
 	PRINTF("Press any key to quit.\n");
 	while(!_getch());
 #endif
