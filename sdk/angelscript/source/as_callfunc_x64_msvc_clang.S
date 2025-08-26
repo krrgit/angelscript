@@ -107,10 +107,10 @@ CallX64:
     cmpq $0, %r11
     je .callfunc
 
-    movlpd %xmm0, 0(%r11)
-    movlpd %xmm1, 8(%r11)
-    movlpd %xmm2, 16(%r11)
-    movlpd %xmm3, 24(%r11)
+    movlpd 0(%r11), %xmm0
+    movlpd 8(%r11), %xmm1
+    movlpd 16(%r11), %xmm2
+    movlpd 24(%r11), %xmm3
 
 .callfunc:
     # Call function
