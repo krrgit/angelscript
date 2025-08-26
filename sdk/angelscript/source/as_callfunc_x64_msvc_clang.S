@@ -32,7 +32,7 @@
 
 #if !defined(AS_MAX_PORTABILITY)
 
-#if defined(__clang__) && defined(WIN32) && !defined(_MSC_VER)
+#if defined(__clang__)
 
 .section .text
 .globl CallX64
