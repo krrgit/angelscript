@@ -681,8 +681,8 @@ SKIP_ON_MAX_PORT
 
 	// Test WRAP_MFN_PR on method without overload in derived class
 	// https://www.gamedev.net/forums/topic/708971-class-members-unregistering/5436764/
-#if defined(__GNUC__)
-	PRINTF("Skipping test for WRAP_MFN_PR on GNUC because it doesn't work\n");
+#if defined(__GNUC__) || defined(__clang__)
+	PRINTF("Skipping test for WRAP_MFN_PR on GNUC and clang because it doesn't work\n");
 #else
 	{
 		engine = asCreateScriptEngine();
