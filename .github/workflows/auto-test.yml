@@ -44,7 +44,7 @@ jobs:
       shell: powershell
       run: |
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        release/test_feature.exe
+        test_feature.exe
 
 
         
