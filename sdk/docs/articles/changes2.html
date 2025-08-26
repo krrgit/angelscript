@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.39.0 WIP - 2025/08/25</h2>
+<h2>Version 2.39.0 WIP - 2025/08/26</h2>
 
 <ul>
 <li>Bug fixes
@@ -28,6 +28,10 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Library interface
 <ul>
 <li>Added GetLineEntryCount and GetLineEntry to asIScriptFunction (Thanks a-k-)
+</ul>
+<li>Project
+<ul>
+<li>Added port of MSVC assembly to GNU/AT&amp;T assembly for pure clang builds on Windows (Thanks OctalCodes)
 </ul>
 </ul>
 
@@ -129,7 +133,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>The any::retrieve methods were not registered as const (Thanks Paril)
 <li>Fixed bug in script builder that didn't clear metadata from previous builds (Thanks Svenvh)
 </ul>
-<li>project
+<li>Project
 <ul>
 <li>Fixed cmake project for compiling on Risc-V 64bit (Thanks Vixea 0)
 <li>Made installing the library optional in the cmakefile (Thanks 1vanK)
