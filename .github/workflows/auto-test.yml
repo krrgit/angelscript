@@ -38,7 +38,7 @@ jobs:
       shell: powershell
       run: |
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
-        cmake . -G Ninja -T clang
+        cmake . -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
         cmake --build . --config Release
     - name: run test_feature
       shell: powershell
