@@ -46,5 +46,20 @@ jobs:
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
         ./test_feature.exe
 
+  MacOS_arm64_Clang:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: build angelscript & test_feature
+      run: |
+        cd $GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
+        cmake .
+        cmake --build .
+    - name: run test_feature
+      run: |
+        cd $GITHUB_WORKSPACE/sdk/tests/test_feature/bin
+        ./testgnuc
+        
+
 
         
