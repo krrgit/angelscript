@@ -58,7 +58,7 @@ jobs:
     - name: run test_feature
       run: |
         cd $GITHUB_WORKSPACE/sdk/tests/test_feature/bin
-        ./testgnuc
+        ./test_feature
         
 
 
