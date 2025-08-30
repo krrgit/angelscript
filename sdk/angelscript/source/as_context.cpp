@@ -774,10 +774,9 @@ int asCContext::Prepare(asIScriptFunction *func)
 
 	// Reset state
 	// Most of the time the previous state will be asEXECUTION_FINISHED, in which case the values are already initialized
+	ClearException();
 	if( m_status != asEXECUTION_FINISHED )
 	{
-		m_exceptionLine           = -1;
-		m_exceptionFunction       = 0;
 		m_doAbort                 = false;
 		m_doSuspend               = false;
 		m_regs.doProcessSuspend   = m_lineCallback;
@@ -808,7 +807,17 @@ int asCContext::Prepare(asIScriptFunction *func)
 	return asSUCCESS;
 }
 
-// Free all resources
+// internal
+void asCContext::ClearException()
+{
+	m_exceptionString = "";
+	m_exceptionFunction = 0;
+	m_exceptionLine = -1;
+	m_exceptionColumn = -1;
+	m_exceptionSectionIdx = 0;
+}
+
+// interface
 int asCContext::Unprepare()
 {
 	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
@@ -853,9 +862,9 @@ int asCContext::Unprepare()
 	}
 
 	// Clear function pointers
+	ClearException();
 	m_initialFunction = 0;
 	m_currentFunction = 0;
-	m_exceptionFunction = 0;
 	m_regs.programPointer = 0;
 
 	// Reset status
