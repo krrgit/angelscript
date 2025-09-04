@@ -57,6 +57,7 @@ bool TestOptimize();
 bool TestNotInitialized();
 bool TestVector3();
 
+namespace TestLiteral           { bool Test(); }
 namespace TestForEach           { bool Test(); }
 namespace TestException         { bool Test(); }
 namespace TestCDeclReturn       { bool Test(); }
@@ -251,6 +252,7 @@ int allTests()
 	if( Test_Addon_ScriptSocket::Test()  ) goto failed; else PRINTF("-- Test_Addon_ScriptSocket passed\n");
 #endif
 
+	if (TestLiteral::Test()                     ) goto failed; else PRINTF("-- TestLiteral passed\n");
 	if( TestForEach::Test()                     ) goto failed; else PRINTF("-- TestForEach passed\n");
 	if( TestContext::Test()                     ) goto failed; else PRINTF("-- TestContext passed\n");
 	if( TestComposition::Test()                 ) goto failed; else PRINTF("-- TestComposition passed\n");

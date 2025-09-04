@@ -599,6 +599,7 @@
     <ClCompile Include="..\..\source\test_debug.cpp" />
     <ClCompile Include="..\..\source\test_defaultarg.cpp" />
     <ClCompile Include="..\..\source\test_foreach.cpp" />
+    <ClCompile Include="..\..\source\test_literal.cpp" />
     <ClCompile Include="..\..\source\test_namedargs.cpp" />
     <ClCompile Include="..\..\source\test_destructor.cpp" />
     <ClCompile Include="..\..\source\test_dict.cpp" />
