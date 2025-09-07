@@ -6921,7 +6921,7 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 			//                         functions with 1 parameter, even though they should still be
 			//                         registered with RegisterObjectBehaviour()
 
-			if( (ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_NOHANDLE))
+			if ((ctx->type.dataType.GetTypeInfo()->flags & asOBJ_REF) && !(ctx->type.dataType.GetTypeInfo()->flags & asOBJ_NOHANDLE))
 			{
 				// Add code to avoid calling the cast behaviour if the handle is already null,
 				// because that will raise a null pointer exception due to the cast behaviour
@@ -6951,7 +6951,17 @@ bool asCCompiler::CompileRefCast(asCExprContext *ctx, const asCDataType &to, boo
 				ctx->bc.Instr(asBC_RDSPtr);
 				ctx->type.dataType.MakeReference(false);
 
-				asCArray<asCExprContext *> args;
+				asCArray<asCExprContext*> args;
+
+				// Verify that the opImplCast isn't returning a type by value
+				asCScriptFunction* func = engine->scriptFunctions[ops[0]];
+				if (!func->returnType.IsReference() && !func->returnType.IsObjectHandle())
+				{
+					asCString msg;
+					msg.Format(TXT_ILLEGAL_RETURN_BY_VALUE_FOR_s, func->GetDeclarationStr().AddressOf());
+					Error(msg, node);
+				}
+
 				MakeFunctionCall(ctx, ops[0], CastToObjectType(ctx->type.dataType.GetTypeInfo()), args, node);
 				ctx->bc.Instr(asBC_PopPtr);
 

@@ -147,6 +147,7 @@
 // TODO: Should be TXT_ILLEGAL_OPERATION_ON_s
 #define TXT_ILLEGAL_OPERATION                      "Illegal operation on this datatype"
 #define TXT_ILLEGAL_OPERATION_ON_s                 "Illegal operation on '%s'"
+#define TXT_ILLEGAL_RETURN_BY_VALUE_FOR_s          "Illegal return by value for '%s' in type cast"
 #define TXT_ILLEGAL_TARGET_TYPE_FOR_REF_CAST       "Illegal target type for reference cast"
 #define TXT_ILLEGAL_VARIABLE_NAME_s                "Illegal variable name '%s'."
 #define TXT_INHERITED_PRIVATE_PROP_ACCESS_s        "Illegal access to inherited private property '%s'"

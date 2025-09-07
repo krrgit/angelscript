@@ -280,6 +280,48 @@ bool Test()
 		}
 	}
 
+	// Test opImplCast doesn't allow returning object by value
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		RegisterStdString(engine);
+		engine->RegisterGlobalFunction("void print(const string &in)", asFUNCTION(Print), asCALL_GENERIC);
+
+		asIScriptModule* mod = engine->GetModule("test", asGM_ALWAYS_CREATE);
+		mod->AddScriptSection("test",
+			"class special_string { \n"
+			"	private string val; \n"
+			"	special_string(const string&in col, const string&in val) { \n"
+			"		this.val = val; \n"
+			"	} \n"
+			// This should not be allowed as it returns object by value
+			"	string opImplCast() { \n"
+			"		return val; \n"
+			"	} \n"
+			"} \n"
+			"class storage { \n"
+			"	special_string s('unneeded', 'this is a test'); \n"
+			"} \n"
+			"void main() { \n"
+			"	storage s; \n"
+			"	print(s.s); \n"
+			"} \n");
+		r = mod->Build();
+		if (r >= 0)
+			TEST_FAILED;
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "test (13, 1) : Info    : Compiling void main()\n"
+						   "test (15, 8) : Error   : Illegal return by value for 'string special_string::opImplCast()' in type cast\n")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test opImplConv to bool in conditions for value types
 	// https://www.gamedev.net/forums/topic/713122-opimplconv-to-bool-doesnt-work-in-a-ternary-operator-condition/
 	{
