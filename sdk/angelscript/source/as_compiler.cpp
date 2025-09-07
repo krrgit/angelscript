@@ -2289,7 +2289,7 @@ int asCCompiler::PrepareArgument(asCDataType *paramType, asCExprContext *ctx, as
 				sVariable* var = ctx->type.isVariable ? variables->GetVariableByOffset(ctx->type.stackOffset) : 0;
 				if( !(!isFunction && isMakingCopy && ctx->type.dataType.IsObjectHandle() && ctx->type.isVariable) || 
 					(var && var->type.IsReference() && var->type.IsObjectHandle()) )
-					PrepareTemporaryVariable(node, ctx, true);
+					PrepareTemporaryVariable(node, ctx, true, true);
 			}
 		}
 	}
@@ -5931,7 +5931,7 @@ void asCCompiler::CompileExpressionStatement(asCScriptNode *enode, asCByteCode *
 	}
 }
 
-void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *ctx, bool forceOnHeap)
+void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *ctx, bool forceOnHeap, bool forceValueCopy)
 {
 	// The input can be either an object or funcdef, either as handle or reference
 	asASSERT(ctx->type.dataType.IsObject() || ctx->type.dataType.IsFuncdef());
@@ -5956,13 +5956,23 @@ void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *
 
 	// Allocate temporary variable
 	asCDataType dt = ctx->type.dataType;
+	bool isHandle = dt.IsObjectHandle();
+	bool isReadOnly = dt.IsReadOnly();
+
+	// If the type supports handles, then we will always use a handle
+	if (!forceValueCopy)
+	{
+		if (!dt.IsObjectHandle() && dt.SupportHandles())
+			dt.MakeHandle(true);
+	}
+	
 	dt.MakeReference(false);
 	dt.MakeReadOnly(false);
 
 	int offset = AllocateVariable(dt, true, forceOnHeap);
 
 	// Objects stored on the stack are not considered references
-	dt.MakeReference(IsVariableOnHeap(offset));
+	dt.MakeReference(IsVariableOnHeap(offset) || dt.IsObjectHandle());
 
 	asCExprValue lvalue;
 	lvalue.Set(dt);
@@ -5988,7 +5998,16 @@ void asCCompiler::PrepareTemporaryVariable(asCScriptNode *node, asCExprContext *
 	ctx->type.stackOffset = (short)offset;
 	ctx->type.isVariable = true;
 	ctx->type.isExplicitHandle = isExplicitHandle;
-	ctx->type.dataType.MakeReference(IsVariableOnHeap(offset));
+	ctx->type.dataType.MakeReference(IsVariableOnHeap(offset) || dt.IsObjectHandle());
+
+	if (!forceValueCopy)
+	{
+		// If the original was not a handle, then the temporary variable should also not be a handle
+		// In this case we don't need to check for null handle, since we original was already known not to be a null handle
+		if (!isHandle)
+			ctx->type.dataType.MakeHandle(false);
+		ctx->type.dataType.MakeReadOnly(isReadOnly);
+	}
 }
 
 void asCCompiler::CompileReturnStatement(asCScriptNode *rnode, asCByteCode *bc)
@@ -8445,7 +8464,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asCExprContext *ctx, const asCDat
 			if (ctx->type.isConstant && ctx->type.dataType.IsEqualExceptRefAndConst(engine->stringType))
 			{
 				if (generateCode)
-					PrepareTemporaryVariable(node, ctx);
+					PrepareTemporaryVariable(node, ctx, false, true);
 				else
 				{
 					ctx->type.dataType.MakeReadOnly(false);

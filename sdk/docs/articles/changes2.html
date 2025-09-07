@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.39.0 WIP - 2025/09/04</h2>
+<h2>Version 2.39.0 WIP - 2025/09/07</h2>
 
 <ul>
 <li>Bug fixes
@@ -26,6 +26,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>GetGlobalFunctionByDecl wasn't using the explicit namespace in the declaration (Thanks Miss)
 <li>Fixed used of deprecated OSAtomicIncrement32 on MacOS (Thanks Billy O'Neal)
 <li>Unprepare was not clearing exception info (Thanks romanpunia_gd)
+<li>Compiler was incorrectly making copy of object member property before type conversion in expressions (Thanks Sam Tupy)
 </ul>
 <li>Library interface
 <ul>
