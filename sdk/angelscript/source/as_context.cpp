@@ -4951,12 +4951,12 @@ static const void *const dispatch_table[256] = {
 	INSTRUCTION(255): l_bc = (asDWORD*)255; goto case_FAULT;
 #endif
 
-#ifdef AS_DEBUG
+#if defined(AS_DEBUG) && !defined(AS_USE_COMPUTED_GOTOS)
 	default:
 		asASSERT(false);
 		SetInternalException(TXT_UNRECOGNIZED_BYTE_CODE);
 #endif
-#if defined(_MSC_VER) && !defined(AS_DEBUG)
+#if defined(_MSC_VER) && !defined(AS_DEBUG) && !defined(AS_USE_COMPUTED_GOTOS)
 	default:
 		// This Microsoft specific code allows the
 		// compiler to optimize the switch case as
