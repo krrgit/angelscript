@@ -677,7 +677,7 @@ bool Test()
 		CBytecodeStream stream(__FILE__);
 
 		r = engine->RegisterObjectType("vObj", sizeof(int), asOBJ_VALUE | asOBJ_POD); assert(r >= 0);
-		r = engine->RegisterObjectBehaviour("vObj", asBEHAVE_CONSTRUCT, "void f()", NULL, asCALL_GENERIC);
+		r = engine->RegisterObjectBehaviour("vObj", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(0), asCALL_GENERIC);
 
 		{
 			mod = engine->GetModule(0, asGM_ALWAYS_CREATE); assert(mod != NULL);
@@ -2524,11 +2524,11 @@ bool Test()
 			PRINTF("Tiny module gave a different result than expected:\n");
 			PRINTF("got     : ");
 			for( asUINT n = 0; n < streamTiny.buffer.size(); n++ )
-				PRINTF("%0.2X", streamTiny.buffer[n]);
+				PRINTF("%.2X", streamTiny.buffer[n]);
 			PRINTF("\n");
 			PRINTF("expected: ");
 			for( asUINT m = 0; m < sizeof(expected); m++ )
-				PRINTF("%0.2X", expected[m]);
+				PRINTF("%.2X", expected[m]);
 			PRINTF("\n");
 			TEST_FAILED;
 		}
