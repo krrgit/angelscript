@@ -1481,7 +1481,18 @@ void asCByteCode::ExtractLineNumbers()
 			lineNumbers.PushLast(*(int*)ARG_DW(curr->arg));
 			sectionIdxs.PushLast(*((int*)ARG_DW(curr->arg)+1));
 
-			if( !engine->ep.buildWithoutLineCues )
+			// Check if this is the first instruction in the function
+			asCByteInstruction* c = curr->prev;
+			while (c && (c->op == asBC_VarDecl || c->op == asBC_ObjInfo))
+				c = c->prev;
+
+			if (c == 0)
+			{
+				// Delete the first asBC_SUSPEND instruction in the function since it is not needed, given that
+				// the asCContext::PrepareScriptFunction will anyway call the line callback to allow suspending.
+				DeleteInstruction(curr);
+			}
+			else if( !engine->ep.buildWithoutLineCues )
 			{
 				// Transform BC_LINE into BC_SUSPEND
 				curr->op = asBC_SUSPEND;

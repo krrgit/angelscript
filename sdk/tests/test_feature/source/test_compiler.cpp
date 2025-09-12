@@ -880,7 +880,7 @@ bool Test()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] =
 		{
-			asBC_SUSPEND,asBC_PSF,
+			asBC_PSF,
 			// Setup the initialization list
 			asBC_AllocMem,asBC_SetV4,asBC_PshListElmnt,asBC_PopRPtr,asBC_WRTV4,asBC_SetV4,asBC_PshListElmnt,asBC_PopRPtr,asBC_WRTV4,
 			// Allocate the Point2F with the initialization list
@@ -2835,7 +2835,7 @@ bool Test()
 
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_CALL,asBC_STOREOBJ,asBC_ChkNullV,asBC_VAR,asBC_CALL,asBC_STOREOBJ,asBC_PshVPtr,asBC_GETOBJREF,asBC_CALLINTF,asBC_FREE,
+				asBC_CALL,asBC_STOREOBJ,asBC_ChkNullV,asBC_VAR,asBC_CALL,asBC_STOREOBJ,asBC_PshVPtr,asBC_GETOBJREF,asBC_CALLINTF,asBC_FREE,
 				asBC_SUSPEND,asBC_FREE,asBC_RET
 			};
 		asIScriptFunction *func = mod->GetFunctionByName("main");

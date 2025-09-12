@@ -828,7 +828,7 @@ SKIP_ON_MAX_PORT
 		if( r < 0 )
 			TEST_FAILED;
 		asIScriptFunction *func = mod->GetFunctionByName("func");
-		asBYTE bc[] = {asBC_SUSPEND, asBC_PshC4, asBC_PshC4, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PshGPtr, asBC_ADDSi, asBC_RDSPtr, asBC_COPY, asBC_PopPtr, 
+		asBYTE bc[] = {asBC_PshC4, asBC_PshC4, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PshGPtr, asBC_ADDSi, asBC_RDSPtr, asBC_COPY, asBC_PopPtr,
 					   asBC_SUSPEND, asBC_PshC4, asBC_PshC4, asBC_PSF, asBC_CALLSYS, asBC_PSF, asBC_PshGPtr, asBC_ADDSi, asBC_COPY, asBC_PopPtr, 
 					   asBC_SUSPEND, asBC_RET};
 		if( !ValidateByteCode(func, bc) )

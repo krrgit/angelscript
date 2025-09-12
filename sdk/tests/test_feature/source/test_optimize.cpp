@@ -991,7 +991,7 @@ bool TestOptimize()
 			TEST_FAILED;
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_SetV4,asBC_LoadThisR,asBC_WRTV4,asBC_SUSPEND,asBC_RET
+				asBC_SetV4,asBC_LoadThisR,asBC_WRTV4,asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
 			TEST_FAILED;
@@ -1019,7 +1019,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_CALL,asBC_PshRPtr,asBC_RDSPtr,asBC_RefCpyV,asBC_PopPtr,
+				asBC_CALL,asBC_PshRPtr,asBC_RDSPtr,asBC_RefCpyV,asBC_PopPtr,
 				asBC_SUSPEND,asBC_LOADOBJ,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
@@ -1048,7 +1048,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_CALL,asBC_FREE,asBC_STOREOBJ,
+				asBC_CALL,asBC_FREE,asBC_STOREOBJ,
 				asBC_SUSPEND,asBC_FREE,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
@@ -1075,7 +1075,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_CALL,asBC_STOREOBJ,
+				asBC_CALL,asBC_STOREOBJ,
 				asBC_SUSPEND,asBC_PshVPtr,asBC_RefCpyV,asBC_PopPtr,
 				asBC_SUSPEND,asBC_PshVPtr,asBC_RefCpyV,asBC_PopPtr,
 				asBC_SUSPEND,asBC_FREE,asBC_FREE,asBC_RET
@@ -1104,7 +1104,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_SetV4,asBC_MULIi,
+				asBC_SetV4,asBC_MULIi,
 				asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
@@ -1137,7 +1137,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{	
-				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_PSF,asBC_CALLSYS,asBC_PSF,asBC_CALL,asBC_PSF,asBC_CALLSYS,
+				asBC_PshGPtr,asBC_CHKREF,asBC_PSF,asBC_CALLSYS,asBC_PSF,asBC_CALL,asBC_PSF,asBC_CALLSYS,
 				asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
@@ -1172,7 +1172,7 @@ bool TestOptimize()
 		asBYTE expect[] = 
 			{
 				// TODO: optimize: ChkNullS shouldn't be necessary
-				asBC_SUSPEND,asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_PshVPtr,asBC_ChkNullS,asBC_CALL,asBC_FREE,
+				asBC_PshGPtr,asBC_CHKREF,asBC_RefCpyV,asBC_PopPtr,asBC_PshVPtr,asBC_ChkNullS,asBC_CALL,asBC_FREE,
 				asBC_SUSPEND,asBC_RET
 			};
 		if( !ValidateByteCode(func, expect) )
@@ -1208,7 +1208,7 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("main");
 		asBYTE expect[] = 
 			{
-				asBC_SUSPEND, asBC_PGA, asBC_PSF, asBC_CALLSYS,
+				asBC_PGA, asBC_PSF, asBC_CALLSYS,
 				asBC_SUSPEND, asBC_PGA, asBC_PSF, asBC_CALLSYS, asBC_CpyRtoV4, asBC_PshV4, asBC_CALLSYS,
 				asBC_SUSPEND, asBC_PSF, asBC_CALLSYS, asBC_RET
 			};
@@ -1242,7 +1242,6 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] = 
 			{
-				asBC_SUSPEND,
 				// Push the pointer to the string constant on the stack
 				asBC_PGA,
 				// Push the constant 1 on the stack
@@ -1277,7 +1276,6 @@ bool TestOptimize()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] =
 		{
-			asBC_SUSPEND,
 			asBC_FREE,    // TODO: this can be removed as well if the compiler can determine that the variable is never used
 			asBC_RET
 		};

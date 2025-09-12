@@ -1279,7 +1279,6 @@ bool Test()
 		asIScriptFunction *func = mod->GetFunctionByName("func");
 		asBYTE expect[] =
 		{
-			asBC_SUSPEND,
 			asBC_PshVPtr,
 			asBC_RefCpyV, // The refcpy here is required because the function expects a ref to a handle
 			asBC_PopPtr,
