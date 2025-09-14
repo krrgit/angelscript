@@ -7211,10 +7211,17 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 		{
 			// Attempt to resolve an ambiguous enum value
 			asCDataType out;
-			asDWORD value;
+			asINT64 value;
 			if( builder->GetEnumValueFromType(CastToEnumType(to.GetTypeInfo()), ctx->enumValue.AddressOf(), out, value) )
 			{
-				ctx->type.SetConstantDW(out, value);
+				if (out.GetSizeInMemoryBytes() == 1)
+					ctx->type.SetConstantB(out, asBYTE(value));
+				else if (out.GetSizeInMemoryBytes() == 2)
+					ctx->type.SetConstantW(out, asWORD(value));
+				else if (out.GetSizeInMemoryBytes() == 4)
+					ctx->type.SetConstantDW(out, asDWORD(value));
+				else
+					ctx->type.SetConstantQW(out, value);
 				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
 
 				// Reset the enum value since we no longer need it
@@ -7239,9 +7246,9 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 		cost = asCC_FLOAT_TO_INT_CONV;
 	else if ((to.IsFloatType() || to.IsDoubleType()) && (ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType()))
 		cost = asCC_INT_TO_FLOAT_CONV;
-	else if (ctx->type.dataType.IsEnumType() && to.IsIntegerType() && to.GetSizeInMemoryBytes() == ctx->type.dataType.GetSizeInMemoryBytes() )
+	else if (ctx->type.dataType.IsEnumType() && ((ctx->type.dataType.IsIntegerType() && to.IsIntegerType()) || (ctx->type.dataType.IsUnsignedType() && to.IsUnsignedType())) && to.GetSizeInMemoryBytes() == ctx->type.dataType.GetSizeInMemoryBytes())
 		cost = asCC_ENUM_SAME_SIZE_CONV;
-	else if (ctx->type.dataType.IsEnumType() && to.IsIntegerType() && to.GetSizeInMemoryBytes() != ctx->type.dataType.GetSizeInMemoryBytes())
+	else if (ctx->type.dataType.IsEnumType() && ((ctx->type.dataType.IsIntegerType() && to.IsIntegerType()) || (ctx->type.dataType.IsUnsignedType() && to.IsUnsignedType())) && to.GetSizeInMemoryBytes() != ctx->type.dataType.GetSizeInMemoryBytes())
 		cost = asCC_ENUM_DIFF_SIZE_CONV;
 	else if( to.IsUnsignedType() && ctx->type.dataType.IsIntegerType() )
 		cost = asCC_SIGNED_TO_UNSIGNED_CONV;
@@ -7288,8 +7295,48 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 			}
 		}
 
-		if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType()) ||
-			(to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST) )
+		if (to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST)
+		{
+			if (ctx->type.dataType.IsIntegerType() ||
+				ctx->type.dataType.IsUnsignedType())
+			{
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetTypeInfo(to.GetTypeInfo());
+			}
+			else if (ctx->type.dataType.IsFloatType())
+			{
+				ConvertToTempVariable(ctx);
+				ctx->bc.InstrSHORT(to.GetSizeInMemoryDWords() == 2 ? asBC_fTOi64 : asBC_fTOi, (short)ctx->type.stackOffset);
+				ctx->type.dataType.SetTokenType(to.GetTokenType());
+				ctx->type.dataType.SetTypeInfo(to.GetTypeInfo());
+				
+				if (convType != asIC_EXPLICIT_VAL_CAST)
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
+			}
+			else if (ctx->type.dataType.IsDoubleType())
+			{
+				ConvertToTempVariable(ctx);
+				ReleaseTemporaryVariable(ctx->type, &ctx->bc);
+				int offset = AllocateVariable(to, true);
+				ctx->bc.InstrW_W(to.GetSizeInMemoryDWords() == 2 ? asBC_dTOi64 : asBC_dTOi, offset, ctx->type.stackOffset);
+				ctx->type.SetVariable(to, offset, true);
+				
+				if (convType != asIC_EXPLICIT_VAL_CAST)
+					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
+			}
+			
+			// Convert to smaller integer if necessary
+			s = to.GetSizeInMemoryBytes();
+			if (s < 4)
+			{
+			ConvertToTempVariable(ctx);
+			if (s == 1)
+				ctx->bc.InstrSHORT(asBC_iTOb, (short)ctx->type.stackOffset);
+			else if (s == 2)
+				ctx->bc.InstrSHORT(asBC_iTOw, (short)ctx->type.stackOffset);
+			}
+		}
+		else if ((to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType()))
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
 				ctx->type.dataType.IsUnsignedType() )
@@ -7341,7 +7388,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 					ctx->bc.InstrSHORT(asBC_iTOw, (short)ctx->type.stackOffset);
 			}
 		}
-		else if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
+		else if (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 && !to.IsEnumType())
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
 				ctx->type.dataType.IsUnsignedType() )
@@ -7385,7 +7432,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 					Warning(TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC, node);
 			}
 		}
-		else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1  )
+		else if (to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType())
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
 				ctx->type.dataType.IsUnsignedType() )
@@ -7437,7 +7484,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 					ctx->bc.InstrSHORT(asBC_iTOw, (short)ctx->type.stackOffset);
 			}
 		}
-		else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
+		else if (to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 && !to.IsEnumType())
 		{
 			if( ctx->type.dataType.IsIntegerType() ||
 				ctx->type.dataType.IsUnsignedType() )
@@ -7566,7 +7613,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asCExprContext *ctx, const 
 	}
 	else
 	{
-		if( ((to.IsIntegerType() && !to.IsEnumType()) || to.IsUnsignedType() ||
+		if ((((to.IsIntegerType() || to.IsUnsignedType()) && !to.IsEnumType()) ||
 			 to.IsFloatType()   || to.IsDoubleType() ||
 			 (to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST)) &&
 			(ctx->type.dataType.IsIntegerType() || ctx->type.dataType.IsUnsignedType() ||
@@ -8984,46 +9031,155 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 	// References cannot be constants
 	if( from->type.dataType.IsReference() ) return;
 
-	if( (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType()) ||
-		(to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST) )
+	if((to.IsEnumType() && convType == asIC_EXPLICIT_VAL_CAST))
 	{
 		if( from->type.dataType.IsFloatType() ||
 			from->type.dataType.IsDoubleType() ||
 			from->type.dataType.IsUnsignedType() ||
 			from->type.dataType.IsIntegerType() )
 		{
-			asCDataType targetDt;
-			if (to.IsEnumType())
-				targetDt = to;
-			else
-				targetDt = asCDataType::CreatePrimitive(ttInt, true);
+			// Transform the value
+			// Float constants can be implicitly converted to int
+			if (from->type.dataType.IsFloatType())
+			{
+				float fc = from->type.GetConstantF();
+				asINT64 ic = asINT64(fc);
+				
+				if (asINT64(ic) != fc)
+				{
+					if (convType != asIC_EXPLICIT_VAL_CAST && node) 
+						Warning(TXT_NOT_EXACT, node);
+				}
+				
+				if (to.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantB(to, asBYTE(ic));
+				else if (to.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantW(to, asWORD(ic));
+				else if (to.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantDW(to, asDWORD(ic));
+				else
+					from->type.SetConstantQW(to, ic);
+			}
+			// Double constants can be implicitly converted to int
+			else if (from->type.dataType.IsDoubleType())
+			{
+				double fc = from->type.GetConstantD();
+				asINT64 ic = asINT64(fc);
+				
+				if (asINT64(ic) != fc)
+				{
+					if (convType != asIC_EXPLICIT_VAL_CAST && node) 
+						Warning(TXT_NOT_EXACT, node);
+				}
+				
+				if (to.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantB(to, asBYTE(ic));
+				else if (to.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantW(to, asWORD(ic));
+				else if (to.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantDW(to, asDWORD(ic));
+				else
+					from->type.SetConstantQW(to, ic);
+			}
+			else if (from->type.dataType.IsUnsignedType())
+			{
+				asQWORD qw;
+				
+				if (from->type.dataType.GetSizeInMemoryBytes() == 1)
+					qw = from->type.GetConstantB();
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 2)
+					qw = from->type.GetConstantW();
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 4)
+					qw = from->type.GetConstantDW();
+				else
+					qw = from->type.GetConstantQW();
+				
+				// Convert to `to`
+				if (to.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantB(to, (asBYTE)qw);
+				else if (to.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantW(to, (asWORD)qw);
+				else if (to.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantDW(to, (asDWORD)qw);
+				else
+					from->type.SetConstantQW(to, (asQWORD)qw);
+			}
+			else if (from->type.dataType.IsIntegerType())
+			{
+				asINT64 qw;
+				
+				if (from->type.dataType.GetSizeInMemoryBytes() == 1)
+					qw = from->type.GetConstantB();
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 2)
+					qw = from->type.GetConstantW();
+				else if (from->type.dataType.GetSizeInMemoryBytes() == 4)
+					qw = from->type.GetConstantDW();
+				else
+					qw = from->type.GetConstantQW();
+			
+				// Convert to `to`
+				if (to.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantB(to, (asINT8)qw);
+				else if (to.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantW(to, (asINT16)qw);
+				else if (to.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantDW(to, (asINT32)qw);
+				else
+					from->type.SetConstantQW(to, (asINT64)qw);
+			}
+		}
+	}
+	else if ((to.IsIntegerType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType()))
+	{
+		if (from->type.dataType.IsFloatType() ||
+			from->type.dataType.IsDoubleType() ||
+			from->type.dataType.IsUnsignedType() ||
+			from->type.dataType.IsIntegerType())
+		{
+			asCDataType targetDt = asCDataType::CreatePrimitive(ttInt, true);
 
 			// Transform the value
 			// Float constants can be implicitly converted to int
 			if( from->type.dataType.IsFloatType() )
 			{
 				float fc = from->type.GetConstantF();
-				int ic = int(fc);
+				asINT64 ic = int(fc);
 
 				if( float(ic) != fc )
 				{
-					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
+					if( convType != asIC_EXPLICIT_VAL_CAST && node ) 
+						Warning(TXT_NOT_EXACT, node);
 				}
 
-				from->type.SetConstantDW(targetDt, ic);
+				if (targetDt.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantB(targetDt, asBYTE(ic));
+				else if (targetDt.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantW(targetDt, asWORD(ic));
+				else if (targetDt.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantDW(targetDt, asDWORD(ic));
+				else
+					from->type.SetConstantQW(targetDt, ic);
 			}
 			// Double constants can be implicitly converted to int
 			else if( from->type.dataType.IsDoubleType() )
 			{
 				double fc = from->type.GetConstantD();
-				int ic = int(fc);
+				asINT64 ic = int(fc);
 
 				if( double(ic) != fc )
 				{
-					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_NOT_EXACT, node);
+					if( convType != asIC_EXPLICIT_VAL_CAST && node ) 
+						Warning(TXT_NOT_EXACT, node);
 				}
 
-				from->type.SetConstantDW(targetDt, ic);
+				if (targetDt.GetSizeInMemoryBytes() == 1)
+					from->type.SetConstantB(targetDt, asBYTE(ic));
+				else if (targetDt.GetSizeInMemoryBytes() == 2)
+					from->type.SetConstantW(targetDt, asWORD(ic));
+				else if (targetDt.GetSizeInMemoryBytes() == 4)
+					from->type.SetConstantDW(targetDt, asDWORD(ic));
+				else
+					from->type.SetConstantQW(targetDt, ic);
 			}
 			else if( from->type.dataType.IsUnsignedType() && from->type.dataType.GetSizeInMemoryDWords() == 1 )
 			{
@@ -9035,9 +9191,9 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 					Warning(TXT_CHANGE_SIGN, node);
 
 				// Convert to 32bit
-				if( from->type.dataType.GetSizeInMemoryBytes() == 1 )
+				if(targetDt.GetSizeInMemoryBytes() == 1)
 					from->type.SetConstantDW(targetDt, from->type.GetConstantB());
-				else if (from->type.dataType.GetSizeInMemoryBytes() == 2)
+				else if (targetDt.GetSizeInMemoryBytes() == 2)
 					from->type.SetConstantDW(targetDt, from->type.GetConstantW());
 				else
 					from->type.dataType = targetDt;
@@ -9090,18 +9246,18 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 				if( asINT8(from->type.GetConstantDW()) != int(from->type.GetConstantDW()) )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asINT8(from->type.GetConstantDW()));
+				from->type.SetConstantB(to.IsEnumType() ? to : asCDataType::CreatePrimitive(to.GetTokenType(), true), asINT8(from->type.GetConstantDW()));
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
 				if( asINT16(from->type.GetConstantDW()) != int(from->type.GetConstantDW()) )
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asINT16(from->type.GetConstantDW()));
+				from->type.SetConstantW(to.IsEnumType() ? to : asCDataType::CreatePrimitive(to.GetTokenType(), true), asINT16(from->type.GetConstantDW()));
 			}
 		}
 	}
-	else if( to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 )
+	else if (to.IsIntegerType() && to.GetSizeInMemoryDWords() == 2 && !to.IsEnumType())
 	{
 		// Float constants can be implicitly converted to int
 		if( from->type.dataType.IsFloatType() )
@@ -9158,8 +9314,9 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttInt64, true), (int)from->type.GetConstantDW());
 		}
 	}
-	else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1 )
+	else if (to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 1 && !to.IsEnumType())
 	{
+		asCDataType targetDt = asCDataType::CreatePrimitive(ttUInt, true);
 		if( from->type.dataType.IsFloatType() )
 		{
 			float fc = from->type.GetConstantF();
@@ -9248,11 +9405,11 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
 				if( from->type.dataType.GetSizeInMemoryBytes() == 2 )
-					from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantW()));
+					from->type.SetConstantB(to.IsEnumType() ? CastToEnumType(to.GetTypeInfo())->enumType : asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantW()));
 				else if (from->type.dataType.GetSizeInMemoryBytes() == 4)
-					from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantDW()));
+					from->type.SetConstantB(to.IsEnumType() ? CastToEnumType(to.GetTypeInfo())->enumType : asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantDW()));
 				else if (from->type.dataType.GetSizeInMemoryBytes() == 8)
-					from->type.SetConstantB(asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantQW()));
+					from->type.SetConstantB(to.IsEnumType() ? CastToEnumType(to.GetTypeInfo())->enumType : asCDataType::CreatePrimitive(to.GetTokenType(), true), asBYTE(from->type.GetConstantQW()));
 			}
 			else if( to.GetSizeInMemoryBytes() == 2 )
 			{
@@ -9261,20 +9418,30 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 					if( convType != asIC_EXPLICIT_VAL_CAST && node ) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
 				if (from->type.dataType.GetSizeInMemoryBytes() == 4)
-					from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantDW()));
+					from->type.SetConstantW(to.IsEnumType() ? CastToEnumType(to.GetTypeInfo())->enumType : asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantDW()));
 				else if (from->type.dataType.GetSizeInMemoryBytes() == 8)
-					from->type.SetConstantW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantQW()));
+					from->type.SetConstantW(to.IsEnumType() ? CastToEnumType(to.GetTypeInfo())->enumType : asCDataType::CreatePrimitive(to.GetTokenType(), true), asWORD(from->type.GetConstantQW()));
 			}
 			else if (to.GetSizeInMemoryBytes() == 4)
 			{
 				if( asDWORD(from->type.GetConstantQW()) != from->type.GetConstantQW())
 					if (convType != asIC_EXPLICIT_VAL_CAST && node) Warning(TXT_VALUE_TOO_LARGE_FOR_TYPE, node);
 
-				from->type.SetConstantDW(asCDataType::CreatePrimitive(to.GetTokenType(), true), asDWORD(from->type.GetConstantQW()));
+				from->type.SetConstantDW(to.IsEnumType() ? CastToEnumType(to.GetTypeInfo())->enumType : asCDataType::CreatePrimitive(to.GetTokenType(), true), asDWORD(from->type.GetConstantQW()));
 			}
 		}
+		else
+		{
+			// Only uint32 and enums should come here and as these are 32bit
+			// already nothing needs to be done except set the target type
+			asASSERT((from->type.dataType.GetTokenType() == ttUInt ||
+					  from->type.dataType.IsEnumType()) &&
+					 from->type.dataType.GetSizeInMemoryBytes() == 4);
+			
+			from->type.dataType = targetDt;
+		}
 	}
-	else if( to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 )
+	else if (to.IsUnsignedType() && to.GetSizeInMemoryDWords() == 2 && !to.IsEnumType())
 	{
 		if( from->type.dataType.IsFloatType() )
 		{
@@ -9345,6 +9512,8 @@ void asCCompiler::ImplicitConversionConstant(asCExprContext *from, const asCData
 				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), from->type.GetConstantW());
 			else if( from->type.dataType.GetSizeInMemoryBytes() == 4 )
 				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), from->type.GetConstantDW());
+			else if (from->type.dataType.GetSizeInMemoryBytes() == 8)
+				from->type.SetConstantQW(asCDataType::CreatePrimitive(ttUInt64, true), from->type.GetConstantQW());
 		}
 	}
 	else if( to.IsFloatType() )
@@ -10825,7 +10994,7 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 					// Is it an enum type?
 					if (CastToEnumType(scopeType))
 					{
-						asDWORD value = 0;
+						asINT64 value = 0;
 						asCDataType dt;
 						if (builder->GetEnumValueFromType(CastToEnumType(scopeType), name.AddressOf(), dt, value))
 						{
@@ -10833,7 +11002,14 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 								return SL_ERROR;
 
 							// an enum value was resolved
-							outResult->type.SetConstantDW(dt, value);
+							if (dt.GetSizeInMemoryBytes() == 1)
+								outResult->type.SetConstantB(dt, asBYTE(value));
+							else if (dt.GetSizeInMemoryBytes() == 2)
+								outResult->type.SetConstantW(dt, asWORD(value));
+							else if (dt.GetSizeInMemoryBytes() == 4)
+								outResult->type.SetConstantDW(dt, asDWORD(value));
+							else
+								outResult->type.SetConstantQW(dt, value);
 							outResult->symbolNamespace = ns;
 
 							if (!checkAmbiguousSymbols)
@@ -10981,7 +11157,7 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 			if (ns && !engine->ep.requireEnumScope && resultSymbolType == SL_NOMATCH)
 			{
 				// Look for the enum value without explicitly informing the enum type
-				asDWORD value = 0;
+				asINT64 value = 0;
 				asCDataType dt;
 				int e = builder->GetEnumValue(name.AddressOf(), dt, value, ns);
 				if (e)
@@ -11004,7 +11180,14 @@ asCCompiler::SYMBOLTYPE asCCompiler::SymbolLookup(const asCString &name, const a
 					else
 					{
 						// an enum value was resolved
-						outResult->type.SetConstantDW(dt, value);
+						if (dt.GetSizeInMemoryBytes() == 1)
+							outResult->type.SetConstantB(dt, asBYTE(value));
+						else if (dt.GetSizeInMemoryBytes() == 2)
+							outResult->type.SetConstantW(dt, asWORD(value));
+						else if (dt.GetSizeInMemoryBytes() == 4)
+							outResult->type.SetConstantDW(dt, asDWORD(value));
+						else
+							outResult->type.SetConstantQW(dt, value);
 						outResult->symbolNamespace = ns;
 					}
 
@@ -11524,14 +11707,21 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 				return 0;
 			}
 
-			asDWORD value = 0;
+			asINT64 value = 0;
 			builder->GetEnumValueFromType(CastToEnumType(lookupResult.type.dataType.GetTypeInfo()), name.AddressOf(), dt, value);
 
 			// Even if the enum type is not shared, and we're compiling a shared object,
 			// the use of the values are still allowed, since they are treated as constants.
 
 			// an enum value was resolved
-			ctx->type.SetConstantDW(dt, value);
+			if (dt.GetSizeInMemoryBytes() == 1)
+				ctx->type.SetConstantB(dt, asBYTE(value));
+			else if (dt.GetSizeInMemoryBytes() == 2)
+				ctx->type.SetConstantW(dt, asWORD(value));
+			else if (dt.GetSizeInMemoryBytes() == 4)
+				ctx->type.SetConstantDW(dt, asDWORD(value));
+			else
+				ctx->type.SetConstantQW(dt, value);
 			return 0;
 		}
 	}
@@ -16607,22 +16797,28 @@ void asCCompiler::CompileComparisonOperator(asCScriptNode *node, asCExprContext 
 			signMismatch = true;
 			if( opCtx->type.isConstant )
 			{
-				if( opCtx->type.dataType.GetTokenType() == ttUInt64 || opCtx->type.dataType.GetTokenType() == ttInt64 )
+				eTokenType tokenType;
+				if (opCtx->type.dataType.IsEnumType())
+					tokenType = CastToEnumType(opCtx->type.dataType.GetTypeInfo())->enumType.GetTokenType();
+				else
+					tokenType = opCtx->type.dataType.GetTokenType();
+				
+				if (tokenType == ttUInt64 || tokenType == ttInt64)
 				{
 					if( !(opCtx->type.GetConstantQW() & (asQWORD(1)<<63)) )
 						signMismatch = false;
 				}
-				else if(opCtx->type.dataType.GetTokenType() == ttUInt || opCtx->type.dataType.GetTokenType() == ttInt || opCtx->type.dataType.IsEnumType() )
+				else if (tokenType == ttUInt || tokenType == ttInt)
 				{
 					if( !(opCtx->type.GetConstantDW() & (1<<31)) )
 						signMismatch = false;
 				}
-				else if (opCtx->type.dataType.GetTokenType() == ttUInt16 || opCtx->type.dataType.GetTokenType() == ttInt16)
+				else if (tokenType == ttUInt16 || tokenType == ttInt16)
 				{
 					if (!(opCtx->type.GetConstantW() & (1 << 15)))
 						signMismatch = false;
 				}
-				else if (opCtx->type.dataType.GetTokenType() == ttUInt8 || opCtx->type.dataType.GetTokenType() == ttInt8)
+				else if (tokenType == ttUInt8 || tokenType == ttInt8)
 				{
 					if (!(opCtx->type.GetConstantB() & (1 << 7)))
 						signMismatch = false;

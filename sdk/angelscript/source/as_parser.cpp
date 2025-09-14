@@ -1038,8 +1038,8 @@ void asCParser::GetToken(sToken *token)
 	}
 	// Filter out whitespace and comments
 	while( token->type == ttWhiteSpace ||
-	       token->type == ttOnelineComment ||
-	       token->type == ttMultilineComment );
+		   token->type == ttOnelineComment ||
+		   token->type == ttMultilineComment );
 }
 
 void asCParser::SetPos(size_t pos)
@@ -2822,7 +2822,8 @@ int asCParser::ParseStatementBlock(asCScriptCode *in_script, asCScriptNode *in_b
 	return 0;
 }
 
-// BNF:1: ENUM          ::= ('shared' | 'external')* 'enum' IDENTIFIER (';' | ('{' IDENTIFIER ('=' EXPR)? (',' IDENTIFIER ('=' EXPR)?)* '}'))
+// TODO: enum: The parser should accept any type, and then the compiler should reject invalid types with proper error message. This will be necessary to support typedefs and aliases
+// BNF:1: ENUM          ::= {'shared' | 'external'} 'enum' IDENTIFIER [ ':' ('int' | 'int8' | 'int16' | 'int32' | 'int64' | 'uint' | 'uint8' | 'uint16' | 'uint32' | 'uint64') ] (';' | ('{' IDENTIFIER ['=' EXPR] {',' IDENTIFIER ['=' EXPR]} '}'))
 asCScriptNode *asCParser::ParseEnumeration()
 {
 	asCScriptNode *ident;
@@ -2877,8 +2878,33 @@ asCScriptNode *asCParser::ParseEnumeration()
 	ident->UpdateSourcePos(token.pos, token.length);
 	dataType->AddChildLast(ident);
 
-	// External shared declarations are ended with ';'
 	GetToken(&token);
+	
+	// Check for underlying type
+	if (token.type == ttColon)
+	{
+		GetToken(&token);
+		
+		if (!((token.type >= ttInt && token.type <= ttInt64) ||
+			  (token.type >= ttUInt && token.type <= ttUInt64)))
+		{
+			int tokens[] = { ttInt, ttInt8, ttInt16, ttInt64, ttUInt, ttUInt8, ttUInt16, ttUInt64 };
+			Error(ExpectedOneOf(tokens, 2), &token);
+			Error(InsteadFound(token), &token);
+			return node;
+		}
+		
+		ident = CreateNode(snDataType);
+		if (ident == 0) return node;
+		
+		ident->SetToken(&token);
+		ident->UpdateSourcePos(token.pos, token.length);
+		dataType->AddChildLast(ident);
+		
+		GetToken(&token);
+	}
+	
+	// External shared declarations are ended with ';'
 	if (token.type == ttEndStatement)
 	{
 		RewindTo(&token);

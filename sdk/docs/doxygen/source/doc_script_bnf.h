@@ -77,6 +77,7 @@ WHITESPACE    ::= [ \#x09\#x0A\#x0D]+                  // single token:  spaces,
 
 \todo update NUMBER and BITS with number separators
 \todo update NUMBER with exponent
+\todo update ENUM with underlying type
 
 
 */
