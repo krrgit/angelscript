@@ -2403,7 +2403,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 			if( instr->op == asBC_ALLOC )
 			{
 				asCObjectType *ot = *(asCObjectType**)ARG_DW(instr->arg);
-				asCScriptFunction *f = engine->scriptFunctions[instr->wArg[0]];
+				asCScriptFunction *f = engine->scriptFunctions[(asWORD)instr->wArg[0]];
 				fprintf(file, "   %-8s 0x%x, %d             (type:%s, %s)\n", asBCInfo[instr->op].name, *(int*)ARG_DW(instr->arg), *(int*)(ARG_DW(instr->arg)+1), ot->GetName(), f ? f->GetDeclaration() : "{no func}");
 			}
 			else
@@ -2418,7 +2418,7 @@ void asCByteCode::DebugOutput(const char *name, asCScriptFunction *func)
 			if( instr->op == asBC_ALLOC )
 			{
 				asCObjectType *ot = *(asCObjectType**)ARG_QW(instr->arg);
-				asCScriptFunction *f = engine->scriptFunctions[instr->wArg[0]];
+				asCScriptFunction *f = engine->scriptFunctions[(asWORD)instr->wArg[0]];
 #if defined(__GNUC__) && !defined(_MSC_VER)
 #ifdef AS_64BIT_PTR
 				fprintf(file, "   %-8s 0x%lx, %d             (type:%s, %s)\n", asBCInfo[instr->op].name, *(asINT64*)ARG_QW(instr->arg), *(int*)(ARG_DW(instr->arg)+2), ot->GetName(), f ? f->GetDeclaration() : "{no func}");

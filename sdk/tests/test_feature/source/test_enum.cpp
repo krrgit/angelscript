@@ -71,12 +71,12 @@ static bool TestEnum()
 		CBytecodeStream stream(__FILE__"1");
 		r = mod->SaveByteCode(&stream);
 		if( r < 0 )
-			TEST_FAILED;	
+			TEST_FAILED;
 
 		mod = engine->GetModule("2", asGM_ALWAYS_CREATE);
 		r = mod->LoadByteCode(&stream);
 		if( r < 0 )
-			TEST_FAILED;	
+			TEST_FAILED;
 
 		r = ExecuteString(engine, "assert( a == 1 ); assert( b == 0 );", mod);
 		if (r != asEXECUTION_FINISHED)
