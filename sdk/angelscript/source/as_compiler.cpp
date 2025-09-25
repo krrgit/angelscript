@@ -5680,7 +5680,9 @@ void asCCompiler::CompileForEachStatement(asCScriptNode* node, asCByteCode* bc)
 		sVariable* v = variables->variables[n];
 
 		// Call variable destructors here, for variables not yet destroyed
-		CallDestructor(v->type, v->stackOffset, v->onHeap, bc);
+		// The items (values) were already destroyed as part of the loop statement, so don't destroy them again outside the loop
+		if( !itemOffsets.Exists(v->stackOffset) )
+			CallDestructor(v->type, v->stackOffset, v->onHeap, bc);
 		DeallocateVariable(v->stackOffset);
 	}
 
