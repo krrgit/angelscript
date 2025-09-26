@@ -1200,7 +1200,8 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func, asCObjectType **p
 		for (asUINT n = 0; n < count; n++)
         {
             ReadDataType(&func->templateSubTypes[n]);
-            func->templateSubTypes[n].GetTypeInfo()->AddRefInternal();
+			if(func->templateSubTypes[n].GetTypeInfo())
+            	func->templateSubTypes[n].GetTypeInfo()->AddRefInternal();
         }
 	}
 }
