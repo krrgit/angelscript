@@ -52,6 +52,9 @@
 // AS_WINDOWS_THREADS
 // If the library should be compiled using windows threads.
 
+// AS_WINDOWS_USEFLS
+// If the library should use Fiber Local Storage on Windows, instead of Thread Local Storage.
+
 // AS_POSIX_THREADS
 // If the library should be compiled using posix threads.
 
