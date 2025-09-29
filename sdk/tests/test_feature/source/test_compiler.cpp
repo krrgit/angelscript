@@ -570,7 +570,8 @@ bool Test()
 			"test2 (1, 62) : Error   : Initialization lists cannot be used with 'int'\n"
 			"test2 (1, 30) : Error   : No matching signatures to 'Gui::BasicLayout(int, int)'\n"
 			"test2 (1, 30) : Info    : Candidates are:\n"
-			"test2 (1, 30) : Info    : Gui::BasicLayout@ BasicLayout(Gui::LayoutSpan[]@, Gui::LayoutSpan[]@)\n")
+			"test2 (1, 30) : Info    : Gui::BasicLayout@ BasicLayout(Gui::LayoutSpan[]@, Gui::LayoutSpan[]@)\n"
+			"test2 (1, 30) : Info    : Rejected due to type mismatch at positional parameter 1\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -1435,7 +1436,8 @@ bool Test()
 		if (bout.buffer != "test (2, 1) : Info    : Compiling void foo(const A&inout)\n"
 						   "test (2, 24) : Error   : No matching signatures to 'foo2(const A&)'\n"
 						   "test (2, 24) : Info    : Candidates are:\n"
-						   "test (2, 24) : Info    : void foo2(A&inout a)\n")
+						   "test (2, 24) : Info    : void foo2(A&inout a)\n"
+						   "test (2, 24) : Info    : Rejected due to type mismatch on parameter 'a'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -3736,7 +3738,8 @@ bool Test()
 		if( bout.buffer != "TestCompiler (1, 1) : Info    : Compiling void string_contains_bulk(string, string)\n"
 						   "TestCompiler (3, 3) : Error   : No matching signatures to 'string_contains(const string&, const bool)'\n"
 						   "TestCompiler (3, 3) : Info    : Candidates are:\n"
-						   "TestCompiler (3, 3) : Info    : void string_contains(string&in, int&in)\n" )
+						   "TestCompiler (3, 3) : Info    : void string_contains(string&in, int&in)\n"
+						   "TestCompiler (3, 3) : Info    : Rejected due to type mismatch at positional parameter 2\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4384,7 +4387,8 @@ bool Test()
 		if (bout.buffer != "22 (2, 1) : Info    : Compiling void Func(Some@)\n"
 			"22 (5, 1) : Error   : No matching signatures to 'Func_(<null handle>)'\n"
 			"22 (5, 1) : Info    : Candidates are:\n"
-			"22 (5, 1) : Info    : void Func_(uint i)\n")
+			"22 (5, 1) : Info    : void Func_(uint i)\n"
+			"22 (5, 1) : Info    : Rejected due to type mismatch on parameter 'i'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4586,16 +4590,19 @@ bool Test()
 						   " (10, 5) : Error   : No matching signatures to 'test()'\n"
 						   " (10, 5) : Info    : Candidates are:\n"
 						   " (10, 5) : Info    : void test(int a)\n"
+						   " (10, 5) : Info    : Rejected due to not enough parameters\n"
 						   " (10, 5) : Info    : void test(float a)\n"
-					   	   " (10, 5) : Info    : void test(bool c)\n"
+						   " (10, 5) : Info    : Rejected due to not enough parameters\n"
+						   " (10, 5) : Info    : void test(bool c)\n"
+						   " (10, 5) : Info    : Rejected due to not enough parameters\n"
 						   " (12, 10) : Error   : No matching signatures to 'Test::test()'\n"
 						   " (12, 10) : Info    : Candidates are:\n"
 						   " (12, 10) : Info    : void Test::test(int a)\n"
 						   " (12, 10) : Info    : void Test::test(float a)\n"
 						   " (12, 10) : Info    : void Test::test(bool c)\n" )
 		{
-			TEST_FAILED;
 			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
 		}
 
 		engine->Release();
@@ -4917,7 +4924,8 @@ bool Test()
 		if( bout.buffer != "script (3, 2) : Info    : Compiling irc_event::irc_event()\n"
 		                   "script (6, 10) : Error   : No matching signatures to 'irc_event::set_command(string)'\n"
 		                   "script (6, 10) : Info    : Candidates are:\n"
-		                   "script (6, 10) : Info    : void irc_event::set_command(string@[] i)\n" )
+		                   "script (6, 10) : Info    : void irc_event::set_command(string@[] i)\n"
+			               "script (6, 10) : Info    : Rejected due to type mismatch on parameter 'i'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
@@ -4960,7 +4968,8 @@ bool Test()
 		if( bout.buffer != "script (11, 1) : Info    : Compiling void main()\n"
 			               "script (14, 19) : Error   : No matching signatures to 'tone_synth::set_waveform_type(::sine)'\n"
 		                   "script (14, 19) : Info    : Candidates are:\n"
-		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type i)\n" )
+		                   "script (14, 19) : Info    : void tone_synth::set_waveform_type(wf_type i)\n"
+						   "script (14, 19) : Info    : Rejected due to type mismatch on parameter 'i'\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;

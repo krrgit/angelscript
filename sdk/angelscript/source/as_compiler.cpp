@@ -2558,7 +2558,9 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asCExprContex
 			{
 				if( namedArgs[a].name == namedArg.name )
 				{
-					Error(TXT_DUPLICATE_NAMED_ARG, asgNode);
+					asCString msg;
+					msg.Format(TXT_DUPLICATE_NAMED_ARGUMENT_s, namedArg.name.AddressOf());
+					Error(msg, asgNode);
 					anyErrors = true;
 					break;
 				}
@@ -2724,6 +2726,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 	asCArray<int> origFuncs = funcs; // Keep the original list for error message
 	asUINT cost = 0;
 	asUINT n;
+	asCArray<asSFailedMatch> failedMatches;
 
 	if( funcs.GetLength() > 0 )
 	{
@@ -2744,7 +2747,10 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 				// TODO: variadic: Handle default args
 
 				if (totalArgs <= argsWithoutLast)
+				{
+					failedMatches.PushLast(asSFailedMatch(desc->id, asEFM_NOT_ENOUGH_ARGS));
 					noMatch = true;
+				}
 			}
 			else if( desc->parameterTypes.GetLength() != totalArgs )
 			{
@@ -2763,6 +2769,9 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 
 					if( totalArgs >= desc->parameterTypes.GetLength() - defaultArgs )
 						noMatch = false;
+
+					if (noMatch)
+						failedMatches.PushLast(asSFailedMatch(desc->id, totalArgs > desc->parameterTypes.GetLength() ? asEFM_TOO_MANY_ARGS : asEFM_NOT_ENOUGH_ARGS));
 				}
 			}
 
@@ -2810,6 +2819,8 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 				// Was the function a match?
 				if( c == tempFuncs.GetLength() )
 				{
+					failedMatches.PushLast(asSFailedMatch(matchingFuncs[f].funcId, asEFM_POSITIONAL_MISMATCH, n));
+
 					// No, remove it from the list
 					if( f == matchingFuncs.GetLength()-1 )
 						matchingFuncs.PopLast();
@@ -2855,6 +2866,22 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 						{
 							// No argument was found for this, and there is no
 							// default, so it doesn't work.
+
+							// namedArgs isn't in any order, so we need to
+							// do a second scan to find the failed matches.
+							for (n = 0; n < namedArgs->GetLength(); ++n)
+							{
+								asSNamedArgument & namedArg = (*namedArgs)[n];
+								asUINT a = 0;
+								
+								for (; a < desc->parameterTypes.GetLength(); ++a)
+									if (desc->parameterNames[a] == namedArg.name)
+										break;
+								
+								if (a == desc->parameterTypes.GetLength())
+									failedMatches.PushLast(asSFailedMatch(desc->id, asEFM_NAMED_MISSING, namedArg.name.AddressOf()));
+							}
+
 							matchedAll = false;
 							break;
 						}
@@ -2864,6 +2891,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 						if( match != asUINT(-1) )
 						{
 							// Can't name an argument that was already passed
+							failedMatches.PushLast(asSFailedMatch(desc->id, asEFM_NAMED_DUPLICATE, j));
 							matchedAll = false;
 							break;
 						}
@@ -2879,6 +2907,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 
 						if( named.match == asUINT(-1) )
 						{
+							failedMatches.PushLast(asSFailedMatch(desc->id, asEFM_NAMED_MISSING, named.name.AddressOf()));
 							matchedAll = false;
 							break;
 						}
@@ -2887,6 +2916,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 						cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct);
 						if( cost == asUINT(-1) )
 						{
+							failedMatches.PushLast(asSFailedMatch(desc->id, asEFM_NAMED_MISMATCH, named.name.AddressOf()));
 							matchedAll = false;
 							break;
 						}
@@ -3002,7 +3032,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 					asASSERT( node );
 					if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
 					builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
-					PrintMatchingFuncs(origFuncs, node, objectType);
+					PrintMatchingFuncs(origFuncs, node, objectType, &failedMatches);
 				}
 			}
 		}
@@ -3013,7 +3043,7 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asCExprContext
 			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
 			Error(str, node);
 
-			PrintMatchingFuncs(funcs, node, objectType);
+			PrintMatchingFuncs(funcs, node, objectType, &failedMatches);
 		}
 	}
 
@@ -6340,7 +6370,7 @@ void asCCompiler::Information(const asCString &msg, asCScriptNode *node)
 	builder->WriteInfo(script->name, msg, r, c, false);
 }
 
-void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node, asCObjectType *inType)
+void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node, asCObjectType *inType, asCArray<asSFailedMatch>* failedReasons)
 {
 	int r = 0, c = 0;
 	asASSERT( node );
@@ -6367,6 +6397,47 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node, 
 					asCString msg;
 					msg.Format(TXT_WHERE_s_IS_s, ti->GetName(), ti->GetFuncdefSignature()->GetDeclaration());
 					builder->WriteInfo(script->name, msg.AddressOf(), r, c, false);
+				}
+			}
+		}
+
+		// check if a reason exists for this func
+		if (failedReasons)
+		{
+			for (unsigned int f = 0; f < failedReasons->GetLength(); f++)
+			{
+				if ((*failedReasons)[f].func == funcs[n])
+				{
+					asCString msg;
+					switch ((*failedReasons)[f].reason)
+					{
+					case asEFM_NOT_ENOUGH_ARGS:
+						msg.Format(TXT_NOT_ENOUGH_ARGUMENTS);
+						break;
+					case asEFM_TOO_MANY_ARGS:
+						msg.Format(TXT_TOO_MANY_ARGUMENTS);
+						break;
+					case asEFM_POSITIONAL_MISMATCH:
+						if (func->parameterNames[(*failedReasons)[f].arg].GetLength() == 0)
+							msg.Format(TXT_ARGUMENT_TYPE_ERROR_i, (*failedReasons)[f].arg + 1); // use one-indexed parameters, like other compilers (msvc, clang)
+						else
+							msg.Format(TXT_ARGUMENT_TYPE_ERROR_s, func->parameterNames[(*failedReasons)[f].arg].AddressOf());
+						break;
+					case asEFM_NAMED_DUPLICATE:
+						msg.Format(TXT_DUPLICATE_NAMED_ARGUMENT_s, func->parameterNames[(*failedReasons)[f].arg].AddressOf());
+						break;
+					case asEFM_NAMED_MISMATCH:
+						if ((*failedReasons)[f].argName)
+							msg.Format(TXT_ARGUMENT_TYPE_ERROR_s, (*failedReasons)[f].argName);
+						else
+							msg.Format(TXT_ARGUMENT_TYPE_ERROR_s, func->parameterNames[(*failedReasons)[f].arg].AddressOf());
+						break;
+					case asEFM_NAMED_MISSING:
+						msg.Format(TXT_MISSING_ARGUMENT_s, (*failedReasons)[f].argName);
+						break;
+					}
+					builder->WriteInfo(script->name, msg.AddressOf(), r, c, false);
+					break;
 				}
 			}
 		}

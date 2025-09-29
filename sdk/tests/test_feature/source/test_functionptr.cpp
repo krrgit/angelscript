@@ -338,9 +338,11 @@ void test()
 			"test (9, 3) : Error   : No matching signatures to 'GUI::OnMouseButton($func@const)'\n" // TODO: Show the signature of the lambda function in the error message
 			"test (9, 3) : Info    : Candidates are:\n"
 			"test (9, 3) : Info    : void GUI::OnMouseButton(GUI::boolMouseEventCallback@)\n"
+			"test (9, 3) : Info    : Rejected due to type mismatch at positional parameter 1\n"
 			"test (10, 3) : Error   : No matching signatures to 'GUI::OnMouseButton($func@const)'\n" // TODO: Show the signature of the lambda function in the error message
 			"test (10, 3) : Info    : Candidates are:\n"
-			"test (10, 3) : Info    : void GUI::OnMouseButton(GUI::boolMouseEventCallback@)\n")
+			"test (10, 3) : Info    : void GUI::OnMouseButton(GUI::boolMouseEventCallback@)\n"
+			"test (10, 3) : Info    : Rejected due to type mismatch at positional parameter 1\n")
 		{
 			PRINTF("%s", bout.buffer.c_str());
 			TEST_FAILED;
