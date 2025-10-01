@@ -74,16 +74,16 @@ jobs:
     - uses: actions/checkout@v4
     - name: set up Clang
       uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{matrix.arch}}
+  #    with:
+  #      arch: ${{matrix.arch}}
   #  - name: Install Dependencies
   #    run: |
   #      choco upgrade llvm        
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
-        cmake . -G Ninja -DCMAKE_BUILD_TYPE=Release 
-        cmake --build .
+        cmake . -G Ninja -A x64 -T clangcl
+        cmake --build . --config Release
     - name: run test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/bin
