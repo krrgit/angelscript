@@ -67,24 +67,17 @@ jobs:
 
   Windows_x86_Clang-Cl:      
     runs-on: windows-latest
-  #  strategy:
-  #    matrix:
-  #      arch: [x86]
     steps:
     - uses: actions/checkout@v4
     - name: set up Clang
       uses: ilammy/msvc-dev-cmd@v1
-  #    with:
-  #      arch: ${{matrix.arch}}
-  #  - name: Install Dependencies
-  #    run: |
-  #      choco upgrade llvm        
+      with:
+        arch: x86
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
-        cmake . -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release
+        cmake . -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_PROCESSOR=x86
         cmake --build . --config Release
-  #     cmake . -G "Visual Studio 17 2022" -A x64 -T clang-cl
     - name: run test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/bin
