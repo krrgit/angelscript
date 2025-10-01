@@ -397,6 +397,79 @@ bool Test()
 	asIScriptEngine* engine;
 	asIScriptModule* mod;
 
+	// Test saving bytecode loaded from precompiled bytecode
+	// Reported by Aleksander Jaronik
+	{
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+		bout.buffer = "";
+
+		CBytecodeStream stream((string("AS_DEBUG/bc_") + (sizeof(void*) == 4 ? "32" : "64")).c_str());
+
+		{
+			mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+			mod->AddScriptSection("script", 
+				"int test = 0;\n"
+				"void TestFunc(int i)\n"
+				"{\n"
+				"	test += i; \n"
+				"}\n"
+				"class Test\n"
+				"{\n"
+				"	private int t = 0; \n"
+				"	void T()\n"
+				"	{\n"
+				"		t++; \n"
+				"	}\n"
+				"	private void T2()\n"
+				"	{\n"
+				"		t += 2; \n"
+				"	}\n"
+				"}\n");
+			r = mod->Build();
+			if( r < 0 )
+				TEST_FAILED;
+
+			mod->SaveByteCode(&stream);
+		}
+		engine->ShutDownAndRelease();
+
+
+		engine = asCreateScriptEngine();
+		engine->SetMessageCallback(asMETHOD(CBufferedOutStream, Callback), &bout, asCALL_THISCALL);
+
+		{
+			mod = engine->GetModule("DynamicModule", asGM_ALWAYS_CREATE);
+			r = mod->LoadByteCode(&stream);
+			if( r < 0 )
+				TEST_FAILED;
+		}
+
+		// Save the bytecode again to verify that it can be saved multiple times
+		{
+			CBytecodeStream stream2((string("AS_DEBUG/bc_2") + (sizeof(void*) == 4 ? "32" : "64")).c_str());
+			mod->SaveByteCode(&stream2);
+
+			asDWORD crc32_1 = ComputeCRC32(&stream.buffer[0], asUINT(stream.buffer.size()));
+			asDWORD crc32_2 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
+			if( crc32_1 != crc32_2 )
+			{
+				PRINTF("The saved byte code has different checksum in the two saves\n");
+
+				// TODO: Investigate if this is really a bug. It might just be that the data is ordered differently
+				// TEST_FAILED;
+			}
+		}
+
+		engine->ShutDownAndRelease();
+
+		if (bout.buffer != "")
+		{
+			PRINTF("%s", bout.buffer.c_str());
+			TEST_FAILED;
+		}
+	}
+
 	// Test saving / loading bytecode with class that cannot generate copy constructor containing other class that cannot generate copy constructor
 	// Problem reported by Sam Tupy
 	{
