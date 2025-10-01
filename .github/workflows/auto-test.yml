@@ -77,8 +77,6 @@ jobs:
     - uses: actions/checkout@v4
     - name: set up Clang
       uses: ilammy/msvc-dev-cmd@v1
-      with: 
-        arch: ${{matrix.arch}}
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
