@@ -65,6 +65,28 @@ jobs:
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
         ./test_feature.exe
 
+  Windows_x86_Clang-Cl:      
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: set up Clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+       version: latest
+       platform: x86
+       cc: 1
+    - name: build angelscript & test_feature
+      shell: powershell
+      run: |
+        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/projects/cmake
+        cmake . -G Ninja
+        cmake --build . --config Release
+    - name: run test_feature
+      shell: powershell
+      run: |
+        cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
+        ./test_feature.exe
+
   MacOS_arm64_Clang:
     runs-on: macos-latest
     steps:
