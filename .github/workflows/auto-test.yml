@@ -69,15 +69,20 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        arch: [x86]    
+        arch: [x86]
+    env:
+      VCPKG_BUILD_TYPE: release
+      VCPKG_DEFAULT_TRIPLET:  ${{ matrix.arch == 'amd64' && 'x64-windows' || 'x86-windows' }}        
     steps:
     - uses: actions/checkout@v4
     - name: set up Clang
       uses: ilammy/msvc-dev-cmd@v1
+      with: 
+        arch: ${{matrix.arch}}
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
-        cmake . -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release
+        cmake . -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_PROCESSOR=${{matrix.arch}}
         cmake --build . --config Release
     - name: run test_feature
       run: |
