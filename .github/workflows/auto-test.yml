@@ -82,7 +82,8 @@ jobs:
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
-        cmake . -G "Visual Studio 17 2022" -A x64 -T clang-cl
+  #      cmake . -G "Visual Studio 17 2022" -A x64 -T clang-cl
+        cmake . -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release
         cmake --build . --config Release
     - name: run test_feature
       run: |
