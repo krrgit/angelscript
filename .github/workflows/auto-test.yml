@@ -65,14 +65,8 @@ jobs:
         cd $env:GITHUB_WORKSPACE/sdk/tests/test_feature/bin
         ./test_feature.exe
 
-  Windows_x86_Clang-Cl:      
+  Windows_x86-64_Clang-Cl:      
     runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [x86]
-    env:
-      VCPKG_BUILD_TYPE: release
-      VCPKG_DEFAULT_TRIPLET:  ${{ matrix.arch == 'amd64' && 'x64-windows' || 'x86-windows' }}        
     steps:
     - uses: actions/checkout@v4
     - name: set up Clang
