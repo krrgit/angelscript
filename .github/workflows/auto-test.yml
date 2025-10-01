@@ -82,7 +82,7 @@ jobs:
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
-        cmake . -G Ninja -A x64 -T clangcl
+        cmake . -G Ninja -T clangcl
         cmake --build . --config Release
     - name: run test_feature
       run: |
