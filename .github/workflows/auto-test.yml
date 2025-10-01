@@ -67,18 +67,18 @@ jobs:
 
   Windows_x86_Clang-Cl:      
     runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [x86]
+  #  strategy:
+  #    matrix:
+  #      arch: [x86]
     steps:
     - uses: actions/checkout@v4
     - name: set up Clang
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{matrix.arch}}
-    - name: Install Dependencies
-      run: |
-        choco upgrade llvm        
+  #  - name: Install Dependencies
+  #    run: |
+  #      choco upgrade llvm        
     - name: build angelscript & test_feature
       run: |
         cd ${{github.workspace}}/sdk/tests/test_feature/projects/cmake
