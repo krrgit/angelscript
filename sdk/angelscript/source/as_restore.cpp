@@ -2537,8 +2537,10 @@ void asCReader::ReadByteCode(asCScriptFunction *func)
 		asUINT newSize = asUINT(func->scriptData->byteCode.GetLength()) + len;
 		if( func->scriptData->byteCode.GetCapacity() < newSize )
 		{
+			asUINT size = newSize;
 			// Determine the average size of the loaded instructions and re-estimate the final size
-			asUINT size = asUINT(float(newSize) / (total - numInstructions) * total) + 1;
+			if (total != numInstructions)
+				size = asUINT(float(newSize) / (total - numInstructions) * total) + 1;
 			func->scriptData->byteCode.AllocateNoConstruct(size, true);
 		}
 		if( !func->scriptData->byteCode.SetLengthNoConstruct(newSize) )

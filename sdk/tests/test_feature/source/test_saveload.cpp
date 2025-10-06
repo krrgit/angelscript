@@ -454,10 +454,15 @@ bool Test()
 			asDWORD crc32_2 = ComputeCRC32(&stream2.buffer[0], asUINT(stream2.buffer.size()));
 			if( crc32_1 != crc32_2 )
 			{
-				PRINTF("The saved byte code has different checksum in the two saves\n");
+				//PRINTF("The saved byte code has different checksum in the two saves\n");
 
 				// TODO: Investigate if this is really a bug. It might just be that the data is ordered differently
 				// TEST_FAILED;
+			}
+			if(stream.buffer.size() != stream2.buffer.size())
+			{
+				PRINTF("The saved byte code has different size in the two saves\n");
+				TEST_FAILED;
 			}
 		}
 
